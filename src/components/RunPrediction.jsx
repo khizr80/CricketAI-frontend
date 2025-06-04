@@ -16,7 +16,7 @@ function RunPrediction() {
 
   const handlePredict = () => {
     setLoading(true);
-    fetch("http://127.0.0.1:8000/predict-player", {
+    fetch("https://cricket-ai-backend.onrender.com/predict-player", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(selected),

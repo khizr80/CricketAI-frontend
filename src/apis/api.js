@@ -7,7 +7,7 @@ export const predictBowlingPerformance = async (
 ) => {
   try {
     const response = await axios.post(
-      "http://127.0.0.1:8000/predict-bowling-performance",
+      "https://cricket-ai-backend.onrender.com/predict-bowling-performance",
       {
         bowler: bowlerName,
         opponent: againstTeam,
