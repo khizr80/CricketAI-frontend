@@ -21,11 +21,11 @@ function WinnerPrediction() {
     async function loadOptions() {
       try {
         const files = [
-          { key: "teams", path: "public/match_prediction/teams.txt" },
-          { key: "venues", path: "public/match_prediction/venues.txt" },
+          { key: "teams", path: "/match_prediction/teams.txt" },
+          { key: "venues", path: "/match_prediction/venues.txt" },
           {
             key: "toss_decisions",
-            path: "public/match_prediction/toss_decisions.txt",
+            path: "/match_prediction/toss_decisions.txt",
           },
         ];
 
@@ -38,7 +38,13 @@ function WinnerPrediction() {
           try {
             opts[key] = JSON.parse(text);
           } catch {
-            throw new Error(`Malformed JSON in ${path}`);
+            // Fallback for plain text (e.g., one item per line)
+            opts[key] = text
+              .trim()
+              .split("\n")
+              .filter((line) => line.length > 0);
+            if (opts[key].length === 0)
+              throw new Error(`No valid data in ${path}`);
           }
         }
 
@@ -75,6 +81,8 @@ function WinnerPrediction() {
       is_tournament_match: selected.tournament_match === "Yes" ? 1 : 0,
     };
 
+    console.log("Sending payload:", JSON.stringify(input_data, null, 2));
+
     setLoading(true);
     setPrediction(null);
     setProbability(null);
@@ -82,19 +90,24 @@ function WinnerPrediction() {
 
     try {
       const res = await fetch(
-        "https://cricket-ai-backend.onrender.com/predict-match-winner",
+        "https://match-predict-backend.onrender.com/predict-match-winner",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(input_data),
         }
       );
-      if (!res.ok) throw new Error(`Server error: ${res.status}`);
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error(`Fetch error: ${res.status} - ${errorText}`);
+        throw new Error(`Server error: ${res.status} - ${errorText}`);
+      }
       const result = await res.json();
+      console.log("Response received:", result);
       setPrediction(result.predicted_winner);
       setProbability((result.win_probability * 100).toFixed(1));
     } catch (error) {
-      console.error("Prediction error:", error);
+      console.error("Prediction error:", error.message);
       setLoadError(error.message);
     } finally {
       setLoading(false);
